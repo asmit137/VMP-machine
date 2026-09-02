@@ -1,10 +1,10 @@
+import { createApp } from '../server/src/app';
+
 let appInstance: any = null;
 
 export default async function handler(req: any, res: any) {
   try {
-    // Dynamically load the backend on the first request to avoid ESM/CommonJS conflicts
     if (!appInstance) {
-      const { createApp } = await import('../server/src/app');
       appInstance = createApp();
     }
     
