@@ -17,11 +17,6 @@ item on it is checked, and `Start` only works once all setup stages are complete
 The UI just reflects the server's state.
 
 ---
-
-## Documentation
-- **[docs/SRS.md](docs/SRS.md)** — Software Requirements Specification (what the system does)
-- **[docs/SDD.md](docs/SDD.md)** — Software Design Document (how it is built)
-
 ## Project structure
 
 Layered backend (**controller → service → repository**, with the workflow rules
