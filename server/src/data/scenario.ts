@@ -1,4 +1,4 @@
-import type { StageKey } from '../domain/workflow';
+export type StageKey = 'machine_checks' | 'tools' | 'workpiece';
 
 export interface ScenarioMeta {
   operation: string;
