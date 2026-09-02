@@ -27,73 +27,70 @@ The UI just reflects the server's state.
 Layered backend (**controller → service → repository**, with the workflow rules
 isolated in a pure `domain` layer) and a **pages + components + hooks** frontend.
 
-```
-New folder/
-├── server/                         # Node + Express + TypeScript API
-│   └── src/
-│       ├── index.ts                # Entry: init DB, start server
-│       ├── app.ts                  # Express app assembly (middleware, routes)
-│       ├── config/
-│       │   └── env.ts              # Typed config from .env
-│       ├── middleware/
-│       │   ├── errorHandler.ts     # HmiError -> 400, else 500
-│       │   └── notFound.ts         # Unknown /api route -> JSON 404
-│       ├── routes/
-│       │   ├── index.ts            # Aggregates routers under /api
-│       │   └── hmi.routes.ts       # Endpoint -> controller mapping
-│       ├── controllers/
-│       │   └── hmi.controller.ts   # HTTP request/response layer
-│       ├── services/
-│       │   └── hmi.service.ts      # Business logic + gating
-│       ├── repositories/
-│       │   ├── session.repository.ts   # Session data access
-│       │   └── item.repository.ts      # Checklist item data access
-│       ├── domain/
-│       │   ├── workflow.ts         # Pure rules (the gating brain)
-│       │   └── workflow.test.ts    # Vitest unit tests
-│       ├── data/
-│       │   └── scenario.ts         # Preloaded mock job + checklist items
-│       ├── db/
-│       │   ├── pool.ts             # PostgreSQL connection pool
-│       │   ├── schema.sql          # Table definitions
-│       │   └── init.ts             # Runs schema + seeds data
-│       └── errors/
-│           └── HmiError.ts         # Domain error type
-│
-├── client/                         # React + TypeScript front end (Vite)
-│   └── src/
-│       ├── App.tsx                 # Stage router (renders one page at a time)
-│       ├── main.tsx                # React entry
-│       ├── api/
-│       │   └── hmiApi.ts           # REST client
-│       ├── hooks/
-│       │   └── useHmi.ts           # State + actions
-│       ├── pages/                  # One page per stage
-│       │   ├── PowerOnPage.tsx
-│       │   ├── MachineChecksPage.tsx
-│       │   ├── ToolsPage.tsx
-│       │   ├── WorkpiecePage.tsx
-│       │   ├── ReadyReviewPage.tsx
-│       │   └── OperationPage.tsx
-│       ├── components/             # Reusable UI
-│       │   ├── TopBar.tsx
-│       │   ├── StepHeader.tsx
-│       │   └── ChecklistStage.tsx
-│       ├── types/
-│       │   └── index.ts            # Shared types
-│       └── styles.css              # Responsive, large-touch, accessible
-└── README.md
+```text
+server/                           # Express backend
+    src/
+        config/
+            env.ts              # Typed config from .env
+        middleware/
+            errorHandler.ts     # HmiError -> 400, else 500
+            notFound.ts         # Unknown /api route -> JSON 404
+        routes/
+            index.ts            # Aggregates routers under /api
+            hmi.routes.ts       # Endpoint -> controller mapping
+        controllers/
+            hmi.controller.ts   # HTTP request/response layer
+        services/
+            hmi.service.ts      # Business logic + gating
+        repositories/
+            session.repository.ts   # Session data access
+            item.repository.ts      # Checklist item data access
+        domain/
+            workflow.ts         # Pure rules (the gating brain)
+            workflow.test.ts    # Vitest unit tests
+        data/
+            scenario.ts         # Preloaded mock job + checklist items
+        db/
+            pool.ts             # PostgreSQL connection pool
+            schema.sql          # Table definitions
+            init.ts             # Runs schema + seeds data
+        errors/
+            HmiError.ts         # Domain error type
+
+client/                           # React + TypeScript front end (Vite)
+    vercel.json                     # Vercel SPA routing rules
+    src/
+        App.tsx                 # Stage router (renders one page at a time)
+        main.tsx                # React entry
+        api/
+            hmiApi.ts           # REST client
+        hooks/
+            useHmi.ts           # State + actions
+        pages/                  # One page per stage
+            PowerOnPage.tsx
+            MachineChecksPage.tsx
+            ToolsPage.tsx
+            WorkpiecePage.tsx
+            ReadyReviewPage.tsx
+            OperationPage.tsx
+        components/             # Reusable UI
+            TopBar.tsx
+            StepHeader.tsx
+            ChecklistStage.tsx
+        types/
+            index.ts            # Shared types
+        styles.css              # Responsive, large-touch, accessible
 ```
 
-**Request flow:** `route → controller → service → repository → PostgreSQL`,
+**Request flow:** `route -> controller -> service -> repository -> PostgreSQL`,
 with the service consulting the pure `domain/workflow` rules before any write.
 
 ---
 
 ## Prerequisites
-1. **Node.js 18+** — https://nodejs.org (`node -v` to check)
-2. **PostgreSQL 14+** — https://www.postgresql.org/download/windows/
-   (or use a free hosted DB such as Neon — see "Deploy" below)
+1. **Node.js 18+** - https://nodejs.org (`node -v` to check)
+2. **PostgreSQL 14+** - https://www.postgresql.org/download/windows/
+   (or use a free hosted DB such as Neon / Render)
 
 ---
 
@@ -106,7 +103,7 @@ CREATE DATABASE vmc_hmi;
 ```
 The tables and seed data are created automatically when the server first starts.
 
-### 2. Start the API
+### 2. Start the API (Backend)
 ```powershell
 cd "server"
 copy .env.example .env
@@ -117,14 +114,13 @@ npm run dev
 ```
 You should see: `VMC HMI API listening on http://localhost:4000`
 
-### 3. Start the client (in a second terminal)
+### 3. Start the Client (Frontend) (in a second terminal)
 ```powershell
 cd "client"
 npm install
 npm run dev
 ```
-Open the URL Vite prints (usually **http://localhost:5173**). The dev server proxies
-`/api` calls to the API on port 4000, so no extra config is needed.
+Open the URL Vite prints (usually **http://localhost:5173**). The dev server proxies `/api` calls to the API on port 4000.
 
 ### 4. Run the tests
 ```powershell
@@ -137,35 +133,40 @@ npm test
 ## API reference
 | Method | Endpoint                    | Purpose                                            |
 |--------|-----------------------------|----------------------------------------------------|
-| GET    | `/api/scenario`             | The preloaded job (operation, material, tools, …)  |
+| GET    | `/api/scenario`             | The preloaded job (operation, material, tools, etc)  |
 | GET    | `/api/state`                | Current stage, status, and every checklist item    |
 | POST   | `/api/items/:id/confirm`    | Confirm one machine/tool/workpiece item            |
-| POST   | `/api/stage/next`           | Advance — **only if the stage is fully confirmed** |
-| POST   | `/api/operation/start`      | READY → RUNNING (only when setup is complete)      |
-| POST   | `/api/operation/stop`       | RUNNING → STOPPED (preserves the current stage)    |
+| POST   | `/api/stage/next`           | Advance - **only if the stage is fully confirmed** |
+| POST   | `/api/operation/start`      | READY -> RUNNING (only when setup is complete)      |
+| POST   | `/api/operation/stop`       | RUNNING -> STOPPED (preserves the current stage)    |
 | POST   | `/api/reset`                | Reset the demo to the first screen                 |
 | GET    | `/api/health`               | Liveness + DB check (used by the deploy probe)     |
 
 ---
 
-## Deploy to a live URL (single service)
+## Deployment (Separated Architecture)
 
-The API serves the built client automatically if `client/dist` exists, so everything
-runs at one URL. A `render.yaml` blueprint is included.
+This project is configured to be deployed as two separate services: Vercel for the Frontend, and Render for the Backend API.
 
-### Option A — Render blueprint (one click)
-1. Push this repo to GitHub.
-2. In Render: **New +** → **Blueprint** → pick the repo. It reads `render.yaml`,
-   provisions a free Postgres, wires `DATABASE_URL`, and deploys.
-3. Open the service URL — the full HMI is live.
+### 1. Deploy the Backend (Render)
+1. In Render, create a new **Web Service**.
+2. Connect this repository and configure:
+   - **Root Directory:** `server`
+   - **Environment:** `Node`
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+3. Add your `DATABASE_URL` as an Environment Variable.
+4. Deploy and copy the live `.onrender.com` URL.
 
-### Option B — any Node host, manually
-1. **Create a free Postgres** (Neon / Render / Supabase). Copy its connection string.
-2. Configure the service:
-   - **Build command:** `cd client && npm install && npm run build && cd ../server && npm install`
-   - **Start command:** `cd server && npm start`
-   - **Environment:** `DATABASE_URL` = your string, `PGSSL` = `true`
-3. Open the service URL.
+### 2. Deploy the Frontend (Vercel)
+1. In Vercel, create a new **Project** and import this repository.
+2. Configure the project:
+   - **Root Directory:** `client`
+   - **Framework Preset:** `Vite`
+3. Add a new Environment Variable:
+   - **Name:** `VITE_API_URL`
+   - **Value:** `https://your-backend-url.onrender.com`
+4. Deploy. The `client/vercel.json` file automatically handles React Router SPA rewrites.
 
 > No login is required for this demo (single operator, single machine). If the reviewer
 > wants one, it can be added, but the assignment does not require it.
