@@ -1,6 +1,7 @@
 {
   "name": "vmc-hmi-monorepo",
   "private": true,
+  "type": "module",
   "workspaces": [
     "client",
     "server"
