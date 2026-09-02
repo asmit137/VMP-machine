@@ -1,5 +1,9 @@
-import { createApp } from '../server/src/app';
+let appInstance: any = null;
 
-const app = createApp();
-
-export default app;
+export default async function (req: any, res: any) {
+  if (!appInstance) {
+    const { createApp } = await import('../server/src/app');
+    appInstance = createApp();
+  }
+  return appInstance(req, res);
+}
