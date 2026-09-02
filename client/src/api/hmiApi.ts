@@ -1,6 +1,7 @@
 import type { State, Scenario } from '../types';
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+// Remove any trailing slashes to prevent //api/scenario double-slash errors
+const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
 async function request(path: string, method: 'GET' | 'POST' = 'GET'): Promise<State> {
   const res = await fetch(`${BASE}/api${path}`, {
