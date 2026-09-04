@@ -8,18 +8,17 @@ import { ToolsPage } from './pages/ToolsPage';
 import { WorkpiecePage } from './pages/WorkpiecePage';
 import { ReadyReviewPage } from './pages/ReadyReviewPage';
 import { OperationPage } from './pages/OperationPage';
+import type { Stage } from './types';
 
-const STAGE_LABELS = ['Power On', 'Machine Checks', 'Tools', 'Workpiece', 'Ready', 'Operation'];
+const STAGE_LABELS: Stage[] = ['POWER_ON', 'MACHINE_CHECKS', 'TOOLS', 'WORKPIECE', 'READY', 'OPERATION'];
+const STAGE_DISPLAY = ['Power On', 'Machine Checks', 'Tools', 'Workpiece', 'Ready', 'Operation'];
 
 export default function App() {
   const { scenario, state, error, busy, run, api } = useHmi();
-
-  const stage = state?.currentStage;
+  const stage = state?.workflow.currentStage;
 
   useEffect(() => {
-    if (stage !== undefined) {
-      window.scrollTo(0, 0);
-    }
+    if (stage !== undefined) window.scrollTo(0, 0);
   }, [stage]);
 
   if (error && !state) {
@@ -37,46 +36,69 @@ export default function App() {
     );
   }
 
-  const confirm = (id: string) => run(() => api.confirmItem(id));
-  const next = () => run(api.next);
+  const stageIndex = STAGE_LABELS.indexOf(stage ?? 'POWER_ON');
+  const next  = () => run(api.nextStage);
+  const start = () => run(api.startOperation);
+  const stop  = () => run(api.stopOperation);
+  const reset = () => run(api.reset);
 
   return (
     <div className="app">
       <TopBar
         operation={scenario.operation}
-        quantity={scenario.quantity}
+        material={scenario.material}
         busy={busy}
       />
-      <StepHeader labels={STAGE_LABELS} current={stage} />
+      <StepHeader labels={STAGE_DISPLAY} current={stageIndex} />
 
       <main className="screen">
         {error && (
-          <p className="error" role="alert">{error}</p>
+          <div style={{ width: '100%', maxWidth: 680, marginBottom: 16 }}>
+            <p className="error" role="alert">{error}</p>
+          </div>
         )}
 
-        {stage === 0 && (
+        {stage === 'POWER_ON' && (
           <PowerOnPage scenario={scenario} busy={busy} onBegin={next} />
         )}
-        {stage === 1 && (
-          <MachineChecksPage state={state} busy={busy} onConfirm={confirm} onNext={next} />
+        {stage === 'MACHINE_CHECKS' && (
+          <MachineChecksPage state={state} busy={busy} onNext={next}
+            onCloseDoor={() => run(api.closeDoor)}
+            onOpenDoor={() => run(api.openDoor)}
+            onReleaseEstop={() => run(api.releaseEstop)}
+            onPressEstop={() => run(api.pressEstop)}
+            onTriggerAlarm={() => run(api.triggerAlarm)}
+            onClearAlarm={() => run(api.clearAlarm)}
+            onCompleteReference={() => run(api.completeReference)}
+          />
         )}
-        {stage === 2 && (
-          <ToolsPage scenario={scenario} state={state} busy={busy} onConfirm={confirm} onNext={next} />
+        {stage === 'TOOLS' && (
+          <ToolsPage state={state} busy={busy} onNext={next}
+            onSetOffset={(id) => run(() => api.setToolOffset(id))}
+            onConfirmTool={(id) => run(() => api.confirmTool(id))}
+            onLoadTool={(id) => run(() => api.loadTool(id))}
+            onResetTool={(id) => run(() => api.resetTool(id))}
+          />
         )}
-        {stage === 3 && (
-          <WorkpiecePage scenario={scenario} state={state} busy={busy} onConfirm={confirm} onNext={next} />
+        {stage === 'WORKPIECE' && (
+          <WorkpiecePage state={state} scenario={scenario} busy={busy} onNext={next}
+            onOrient={() => run(api.orientWorkpiece)}
+            onClamp={() => run(api.clampWorkpiece)}
+            onEstablishZero={() => run(api.establishPartZero)}
+            onSetOffset={() => run(api.setWorkOffset)}
+          />
         )}
-        {stage === 4 && (
-          <ReadyReviewPage state={state} busy={busy} onProceed={next} />
+        {stage === 'READY' && (
+          <ReadyReviewPage state={state} busy={busy} onStart={start} />
         )}
-        {stage === 5 && (
+        {stage === 'OPERATION' && (
           <OperationPage
             scenario={scenario}
             state={state}
             busy={busy}
-            onStart={() => run(api.start)}
-            onStop={() => run(api.stop)}
-            onReset={() => run(api.reset)}
+            onStart={start}
+            onStop={stop}
+            onReset={reset}
           />
         )}
       </main>

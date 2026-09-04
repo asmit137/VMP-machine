@@ -1,6 +1,8 @@
 export class HmiError extends Error {
-  constructor(message: string) {
+  readonly statusCode: number;
+  constructor(message: string, statusCode: number = 400) {
     super(message);
     this.name = 'HmiError';
+    this.statusCode = statusCode;
   }
 }

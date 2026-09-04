@@ -1,18 +1,19 @@
 interface Props {
   operation: string;
-  quantity: number;
+  material: string;
   busy: boolean;
 }
 
-export function TopBar({ operation, quantity, busy }: Props) {
+export function TopBar({ operation, material, busy }: Props) {
   return (
     <header className="topbar">
       <div className="brand">
         PRIMEFORM <span>VMC HMI</span>
       </div>
       <div className="job">
-        {operation} · Qty {quantity}
+        {operation} · {material}
       </div>
+      {busy && <span className="topbar-busy"><span className="loader" /></span>}
     </header>
   );
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { Scenario, State } from '../types';
+import type { Scenario, HmiState } from '../types';
 
 interface Props {
   scenario: Scenario;
-  state: State;
+  state: HmiState;
   busy: boolean;
   onStart: () => void;
   onStop: () => void;
@@ -11,73 +11,73 @@ interface Props {
 }
 
 export function OperationPage({ scenario, state, busy, onStart, onStop, onReset }: Props) {
-  const { status } = state;
+  const { operationState } = state.workflow;
+  const { canStartOperation } = state.readiness;
   const [activeAction, setActiveAction] = useState<'start' | 'stop' | 'reset' | null>(null);
 
   useEffect(() => {
     if (!busy) setActiveAction(null);
   }, [busy]);
 
+  const isRunning = operationState === 'RUNNING';
+
   return (
     <section className="card operation">
-      <h1>5 Operation</h1>
+      <h1>Operation</h1>
       <p className="subtitle">{scenario.operation}</p>
 
       <div
-        className={`status-panel ${status.toLowerCase()}`}
+        className={`status-panel ${operationState.toLowerCase()}`}
         role="status"
         aria-live="polite"
       >
-        <span className="status-label">{status}</span>
+        <span className="status-label">{operationState}</span>
+        {isRunning && <p className="status-hint">Machining in progress…</p>}
       </div>
 
       <div className="op-controls">
-        {status === 'RUNNING' ? (
+        {isRunning ? (
           <button
             className="btn stop big"
-            onClick={() => {
-              setActiveAction('stop');
-              onStop();
-            }}
+            onClick={() => { setActiveAction('stop'); onStop(); }}
             disabled={busy}
+            id="op-stop-btn"
           >
             {busy && activeAction === 'stop' && <span className="loader" />}
-            {busy && activeAction === 'stop' ? 'Stopping...' : '■ Stop operation'}
+            {busy && activeAction === 'stop' ? 'Stopping…' : '■ Stop Operation'}
           </button>
         ) : (
           <button
             className="btn start big"
-            onClick={() => {
-              setActiveAction('start');
-              onStart();
-            }}
-            disabled={busy}
+            onClick={() => { setActiveAction('start'); onStart(); }}
+            disabled={!canStartOperation || busy}
+            id="op-start-btn"
           >
             {busy && activeAction === 'start' && <span className="loader" />}
-            {busy && activeAction === 'start' ? 'Starting...' : '▶ Start operation'}
+            {busy && activeAction === 'start' ? 'Starting…' : '▶ Start Operation'}
           </button>
         )}
-        
-        {status !== 'RUNNING' && (
+
+        {!isRunning && (
           <button
             className="btn big"
-            onClick={() => {
-              setActiveAction('reset');
-              onReset();
-            }}
+            onClick={() => { setActiveAction('reset'); onReset(); }}
             disabled={busy}
+            id="op-reset-btn"
             style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
           >
-            {busy && activeAction === 'reset' ? 'Resetting...' : 'Reset demo'}
+            {busy && activeAction === 'reset' ? 'Resetting…' : '↺ Reset Demo'}
           </button>
         )}
       </div>
 
-      {status === 'RUNNING' && (
-        <p className="hint running-hint">Simulation running… machining in progress.</p>
+      {!isRunning && !canStartOperation && (
+        <p className="hint" style={{ color: 'var(--warn)' }}>
+          Machine, tools, or workpiece conditions not fully met — return to previous stages.
+        </p>
       )}
-      {status === 'STOPPED' && (
-        <p className="hint">Operation stopped. Stage preserved. you can start again.</p>
+      {operationState === 'STOPPED' && canStartOperation && (
+        <p className="hint">Operation stopped. All conditions met — ready to restart.</p>
       )}
     </section>
   );

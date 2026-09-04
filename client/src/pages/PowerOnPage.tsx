@@ -9,9 +9,9 @@ interface Props {
 export function PowerOnPage({ scenario, busy, onBegin }: Props) {
   return (
     <section className="card intro">
-      <h1>Machine powered on</h1>
+      <h1>Machine Powered On</h1>
       <p className="lead">
-        Follow each instruction on screen. Confirm every item before moving on.
+        Review the production job below. All startup checks must be completed before machining can begin.
       </p>
       <dl className="meta">
         <div>
@@ -27,15 +27,21 @@ export function PowerOnPage({ scenario, busy, onBegin }: Props) {
           <dd>{scenario.drawingRevision}</dd>
         </div>
         <div>
-          <dt>CNC program</dt>
-          <dd>
-            {scenario.cncProgram} · {scenario.cncRevision}
-          </dd>
+          <dt>CNC Program</dt>
+          <dd>{scenario.cncProgram} · {scenario.cncRevision}</dd>
+        </div>
+        <div>
+          <dt>Fixture</dt>
+          <dd>{scenario.fixture}</dd>
+        </div>
+        <div>
+          <dt>Work Offset</dt>
+          <dd>{scenario.workOffset}</dd>
         </div>
       </dl>
-      <button className="btn primary big" onClick={onBegin} disabled={busy}>
+      <button className="btn primary big" onClick={onBegin} disabled={busy} id="power-begin-btn">
         {busy && <span className="loader" />}
-        {busy ? 'Starting...' : 'Begin startup'}
+        {busy ? 'Starting…' : 'Begin Startup Checks'}
       </button>
     </section>
   );

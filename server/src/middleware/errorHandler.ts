@@ -8,22 +8,21 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   if (err instanceof HmiError) {
-    return res.status(400).json({ 
+    return res.status(err.statusCode).json({
       success: false,
-      code: 400,
-      error: err.message, // Kept for backwards compatibility with frontend
-      message: err.message
+      code: err.statusCode === 409 ? 'STAGE_NOT_READY' : 'HMI_ERROR',
+      error: err.message,
+      message: err.message,
     });
   }
 
   console.error('API Error:', err);
-  
   const errorMessage = err instanceof Error ? err.message : 'Unknown internal error';
-  
-  res.status(500).json({ 
+
+  res.status(500).json({
     success: false,
-    code: 500,
-    error: errorMessage, // Send actual error message instead of generic internal server error
-    message: errorMessage
+    code: 'INTERNAL_ERROR',
+    error: errorMessage,
+    message: errorMessage,
   });
 }
