@@ -7,17 +7,19 @@ export async function getWorkpiece(): Promise<WorkpieceState> {
             work_offset, work_offset_set, material, drawing_revision
      FROM workpiece_setup WHERE session_id = 1 LIMIT 1`
   );
-  if (rows.length === 0) throw new Error('Workpiece state not found');
-  const r = rows[0];
+  
+  if (!rows.length) throw new Error('Workpiece state not found');
+  
+  const setup = rows[0];
   return {
-    fixture:              r.fixture,
-    orientationCorrect:   r.orientation_correct,
-    clamped:              r.clamped,
-    partZeroEstablished:  r.part_zero_established,
-    workOffset:           r.work_offset,
-    workOffsetSet:        r.work_offset_set,
-    material:             r.material,
-    drawingRevision:      r.drawing_revision,
+    fixture: setup.fixture,
+    orientationCorrect: setup.orientation_correct,
+    clamped: setup.clamped,
+    partZeroEstablished: setup.part_zero_established,
+    workOffset: setup.work_offset,
+    workOffsetSet: setup.work_offset_set,
+    material: setup.material,
+    drawingRevision: setup.drawing_revision,
   };
 }
 
@@ -45,7 +47,6 @@ export const workpieceService = {
   },
 
   async resetWorkpiece(): Promise<void> {
-    // Reset only the setup steps; fixture/material/drawing are scenario constants
     await pool.query(
       `UPDATE workpiece_setup
        SET orientation_correct = false, clamped = false,

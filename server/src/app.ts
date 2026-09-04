@@ -8,20 +8,16 @@ import { errorHandler } from './middleware/errorHandler';
 export function createApp() {
   const app = express();
 
-  
   app.use(cors());
   app.use(express.json());
 
-  
   app.use('/api', apiRouter);
-  app.use('/api', notFound); // unknown /api/* -> JSON 404
+  app.use('/api', notFound);
 
-  
   app.get('/', (_req, res) => {
     res.send('VMC Backend API is running.');
   });
 
-  
   app.use(errorHandler);
 
   return app;

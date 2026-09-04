@@ -2,7 +2,6 @@ import type { Request, Response, NextFunction } from 'express';
 import { machineService } from '../domain/machine/machine.service';
 import { buildHmiState } from '../domain/workflow/workflow.service';
 
-/** All endpoints: update one machine state field, return fresh HMI state. */
 function simulate(action: () => Promise<void>) {
   return async (_req: Request, res: Response, next: NextFunction) => {
     try {

@@ -2,23 +2,23 @@ import { pool } from '../../db/pool';
 import type { ToolState } from './tool.types';
 import { HmiError } from '../../errors/HmiError';
 
-/** Read all tools for session 1. */
 export async function getAllTools(): Promise<ToolState[]> {
   const { rows } = await pool.query(
     `SELECT id, tool_number, name, required, loaded,
             tool_number_correct, type_correct, offset_available, confirmed
      FROM tools WHERE session_id = 1 ORDER BY id`
   );
-  return rows.map(r => ({
-    id:                r.id,
-    toolNumber:        r.tool_number,
-    name:              r.name,
-    required:          r.required,
-    loaded:            r.loaded,
-    toolNumberCorrect: r.tool_number_correct,
-    typeCorrect:       r.type_correct,
-    offsetAvailable:   r.offset_available,
-    confirmed:         r.confirmed,
+  
+  return rows.map(row => ({
+    id: row.id,
+    toolNumber: row.tool_number,
+    name: row.name,
+    required: row.required,
+    loaded: row.loaded,
+    toolNumberCorrect: row.tool_number_correct,
+    typeCorrect: row.type_correct,
+    offsetAvailable: row.offset_available,
+    confirmed: row.confirmed,
   }));
 }
 
@@ -46,7 +46,6 @@ export const toolService = {
 
   async unloadTool(id: string): Promise<void> {
     await requireTool(id);
-    // Unloading also clears confirmation — tool must be re-confirmed after re-loading
     await pool.query(
       `UPDATE tools SET loaded = false, confirmed = false, updated_at = NOW()
        WHERE id = $1 AND session_id = 1`,
@@ -61,7 +60,6 @@ export const toolService = {
 
   async confirmTool(id: string): Promise<void> {
     const tool = await requireTool(id);
-    // Cannot confirm a tool that isn't loaded and doesn't have an offset
     if (!tool.loaded || !tool.offsetAvailable) {
       throw new HmiError('Tool must be loaded and have offset set before confirming', 409);
     }

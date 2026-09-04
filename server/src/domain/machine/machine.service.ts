@@ -1,23 +1,24 @@
 import { pool } from '../../db/pool';
 import type { MachineState } from './machine.types';
 
-/** Read machine state for session 1 from the database. */
 export async function getMachineState(): Promise<MachineState> {
   const { rows } = await pool.query(
     `SELECT power_available, estop_released, door_closed, alarm_active,
             lubrication_ready, coolant_ready, reference_complete
      FROM machine_state WHERE session_id = 1 LIMIT 1`
   );
-  if (rows.length === 0) throw new Error('Machine state not found');
-  const r = rows[0];
+  
+  if (!rows.length) throw new Error('Machine state not found');
+  
+  const state = rows[0];
   return {
-    powerAvailable:    r.power_available,
-    eStopReleased:     r.estop_released,
-    doorClosed:        r.door_closed,
-    alarmActive:       r.alarm_active,
-    lubricationReady:  r.lubrication_ready,
-    coolantReady:      r.coolant_ready,
-    referenceComplete: r.reference_complete,
+    powerAvailable: state.power_available,
+    eStopReleased: state.estop_released,
+    doorClosed: state.door_closed,
+    alarmActive: state.alarm_active,
+    lubricationReady: state.lubrication_ready,
+    coolantReady: state.coolant_ready,
+    referenceComplete: state.reference_complete,
   };
 }
 

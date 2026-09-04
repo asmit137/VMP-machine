@@ -30,11 +30,18 @@ export default function App() {
   }
   if (!scenario || !state) {
     return (
-      <div className="screen">
-        <p className="muted">Loading HMI…</p>
+      <div className="loading-screen">
+        <div className="loading-spinner" aria-hidden="true" />
+        <p className="loading-title">Loading HMI…</p>
+        <p className="loading-sub">
+          The API is hosted on Render's free tier — it may take&nbsp;
+          <strong>up to 60 seconds</strong> to wake up on the first visit.
+          <br />Please wait while the server starts.
+        </p>
       </div>
     );
   }
+
 
   const stageIndex = STAGE_LABELS.indexOf(stage ?? 'POWER_ON');
   const next  = () => run(api.nextStage);

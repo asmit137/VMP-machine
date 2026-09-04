@@ -1,6 +1,5 @@
 import type { ToolState, ToolSubstageStatus } from './tool.types';
 
-/** A required tool is ready only when ALL five conditions are satisfied. */
 export function isToolReady(tool: ToolState): boolean {
   return (
     tool.required &&
@@ -12,12 +11,10 @@ export function isToolReady(tool: ToolState): boolean {
   );
 }
 
-/** All required tools must be ready before the workflow can advance. */
 export function allToolsReady(tools: ToolState[]): boolean {
   return tools.filter(t => t.required).every(t => isToolReady(t));
 }
 
-/** Detailed per-tool status for the frontend — includes individual property flags. */
 export function getToolStatuses(tools: ToolState[]): ToolSubstageStatus[] {
   return tools.map(tool => ({
     id: tool.id,
@@ -33,7 +30,6 @@ export function getToolStatuses(tools: ToolState[]): ToolSubstageStatus[] {
   }));
 }
 
-/** Returns the properties that prevent a specific tool from being ready. */
 export function getToolBlockingReasons(tool: ToolState): string[] {
   const missing: string[] = [];
   if (!tool.loaded)            missing.push('loaded');

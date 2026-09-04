@@ -8,7 +8,6 @@ export function useHmi() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Load scenario + full HMI state on mount
   useEffect(() => {
     Promise.all([api.getScenario(), api.getHmiState()])
       .then(([sc, st]) => {
@@ -18,10 +17,6 @@ export function useHmi() {
       .catch((e) => setError((e as Error).message));
   }, []);
 
-  /**
-   * Execute any API action that returns a fresh HmiState.
-   * Replaces state with the server response — no client-side recalculation.
-   */
   const run = useCallback(async (action: () => Promise<HmiState>) => {
     setBusy(true);
     setError(null);
@@ -35,7 +30,6 @@ export function useHmi() {
     }
   }, []);
 
-  /** Manually refresh state from the server without a mutation. */
   const refresh = useCallback(async () => {
     try {
       setState(await api.getHmiState());
@@ -51,7 +45,6 @@ export function useHmi() {
     busy,
     run,
     refresh,
-    // Expose api so pages don't need to import separately
     api,
   };
 }

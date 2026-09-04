@@ -21,10 +21,6 @@ async function getWorkflowRow(): Promise<{ currentStage: Stage; operationState: 
   };
 }
 
-/**
- * Assembles the complete HMI state from all domain services.
- * Called after every mutation to return a fresh, consistent snapshot.
- */
 export async function buildHmiState(): Promise<HmiState> {
   const [machine, tools, workpiece, workflow] = await Promise.all([
     getMachineState(),
@@ -33,34 +29,25 @@ export async function buildHmiState(): Promise<HmiState> {
     getWorkflowRow(),
   ]);
 
-  const machineCheckStatuses       = getMachineCheckStatuses(machine);
-  const machineSequentialStatuses  = getMachineSequentialStatuses(machine);
-  const toolStatuses               = getToolStatuses(tools);
-  const workpieceCheckStatuses     = getWorkpieceCheckStatuses(workpiece);
-
-  const mc  = machineChecksComplete(machine);
-  const atr = allToolsReady(tools);
-  const wr  = isWorkpieceReady(workpiece);
-
   const state: HmiState = {
     machine,
     tools,
     workpiece,
     workflow,
     readiness: {
-      machineChecksComplete: mc,
-      allToolsReady:         atr,
-      workpieceReady:        wr,
-      canProceed:             false, // filled in below
-      canStartOperation:      false,
-      machineCheckStatuses,
-      machineSequentialStatuses,
-      toolStatuses,
-      workpieceCheckStatuses,
+      machineChecksComplete: machineChecksComplete(machine),
+      allToolsReady: allToolsReady(tools),
+      workpieceReady: isWorkpieceReady(workpiece),
+      canProceed: false,
+      canStartOperation: false,
+      machineCheckStatuses: getMachineCheckStatuses(machine),
+      machineSequentialStatuses: getMachineSequentialStatuses(machine),
+      toolStatuses: getToolStatuses(tools),
+      workpieceCheckStatuses: getWorkpieceCheckStatuses(workpiece),
     },
   };
 
-  state.readiness.canProceed        = canProceed(workflow.currentStage, state);
+  state.readiness.canProceed = canProceed(workflow.currentStage, state);
   state.readiness.canStartOperation = canStartOperation(state);
 
   return state;
@@ -104,8 +91,6 @@ export const workflowService = {
       throw new HmiError('Operation is already running.', 409);
     }
 
-    // Advance stage to OPERATION and set state to RUNNING in one update.
-    // This ensures the READY page is not rendered while the machine is running.
     await pool.query(
       `UPDATE sessions SET current_stage = 'OPERATION', operation_state = 'RUNNING', updated_at = NOW() WHERE id = 1`
     );
@@ -120,7 +105,6 @@ export const workflowService = {
       throw new HmiError('Cannot stop: operation is not running.', 409);
     }
 
-    // Preserve currentStage and all other state — only change operationState
     await pool.query(
       `UPDATE sessions SET operation_state = 'STOPPED', updated_at = NOW() WHERE id = 1`
     );
@@ -128,18 +112,15 @@ export const workflowService = {
     return buildHmiState();
   },
 
-  /** Reset the session to the deterministic initial scenario. */
   async resetSession(): Promise<HmiState> {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Reset workflow
       await client.query(
         `UPDATE sessions SET current_stage = 'POWER_ON', operation_state = 'STOPPED', updated_at = NOW() WHERE id = 1`
       );
 
-      // Reset machine: door open, reference incomplete
       await client.query(
         `UPDATE machine_state
          SET power_available = true, estop_released = true, door_closed = false,
@@ -148,7 +129,6 @@ export const workflowService = {
          WHERE session_id = 1`
       );
 
-      // Reset tools: T1 ready, T2 missing offset+confirm, T3 ready
       await client.query(
         `UPDATE tools SET offset_available = true, confirmed = true, updated_at = NOW()
          WHERE id IN ('T1','T3') AND session_id = 1`
@@ -158,7 +138,6 @@ export const workflowService = {
          WHERE id = 'T2' AND session_id = 1`
       );
 
-      // Reset workpiece: fixture/orientation/clamp/partZero set, G54 NOT set
       await client.query(
         `UPDATE workpiece_setup
          SET orientation_correct = true, clamped = true, part_zero_established = true,

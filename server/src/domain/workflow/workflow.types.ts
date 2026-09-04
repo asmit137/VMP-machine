@@ -32,19 +32,12 @@ export interface ReadinessReport {
   workpieceReady: boolean;
   canProceed: boolean;
   canStartOperation: boolean;
-  /** Raw condition values — used by ReadyReviewPage summary. */
   machineCheckStatuses: SubstageStatus[];
-  /**
-   * Sequential workflow positions for each machine-check substage.
-   * Backend computes ready/current/locked — frontend renders only,
-   * never re-evaluates business logic.
-   */
   machineSequentialStatuses: SequentialSubstageStatus[];
   toolStatuses: ToolSubstageStatus[];
   workpieceCheckStatuses: WorkpieceSubstageStatus[];
 }
 
-// The ordered stage progression used for advancing the workflow
 export const STAGE_ORDER: Stage[] = [
   'POWER_ON',
   'MACHINE_CHECKS',
